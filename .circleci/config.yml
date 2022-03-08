@@ -1,35 +1,76 @@
-machine:
-  ghc:
-    version: 8.10.7
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: fpco/stack-build:lts
+        auth:
+          username: mydockerhub-user
+          password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
+    steps:
+      - checkout
+      - run:
+          name: Build
+          command: cabal build
 
-dependencies:
-  override:
-    - cabal update
-    - cabal sandbox init
-    - cabal install --only-dependencies -j
-    - cabal configure
+      # - restore_cache:
+      #     # Read about caching dependencies: https://circleci.com/docs/2.0/caching/
+      #     name: Restore Cached Dependencies
+      #     keys:
+      #       - cci-demo-haskell-v1-{{ checksum "stack.yaml" }}-{{ checksum "package.yaml" }}
+      #       - cci-demo-haskell-v1-{{ checksum "stack.yaml" }}
+      # - run:
+      #     name: Resolve/Update Dependencies
+      #     command: stack --no-terminal setup
+      # - run:
+      #     name: Run tests
+      #     command: stack --no-terminal test
+      # - run:
+      #     name: Install executable
+      #     command: stack --no-terminal install
+      # - save_cache:
+      #     name: Cache Dependencies
+      #     key: cci-demo-haskell-v1-{{ checksum "stack.yaml" }}-{{ checksum "package.yaml" }}
+      #     paths:
+      #       - "/root/.stack"
+      #       - ".stack-work"
+      # - store_artifacts:
+      #     # Upload test summary for display in Artifacts: https://circleci.com/docs/2.0/artifacts/
+      #     path: ~/.local/bin/circleci-demo-haskell-exe
+      #     destination: circleci-demo-haskell-exe
 
-test:
-  override:
-    - cabal build
 
-post:
-  - git submodule init
-  - git submodule update
-  - cd _site/ && git checkout main
-  - cabal run build
+# machine:
+#   ghc:
+#     version: 8.10.7
 
-deployment:
-  production:
-    branch: hakyll
-    commands:
-      - git config --global user.email circleci@circleci
-      - git config --global user.name CircleCI
-      - cd _site/ && git status
-      - cd _site/ && git add --all
-      - cd _site/ && git commit -m "Update (`date '+%F %T %Z'`) [ci skip]"
-      - cd _site/ && git push origin main
-      - git status
-      - git add _site/
-      - git commit -m "Update _site (`date '+%F %T %Z'`) [ci skip]"
-      - git push origin hakyll
+# dependencies:
+#   override:
+#     - cabal update
+#     - cabal sandbox init
+#     - cabal install --only-dependencies -j
+#     - cabal configure
+
+# test:
+#   override:
+#     - cabal build
+
+# post:
+#   - git submodule init
+#   - git submodule update
+#   - cd _site/ && git checkout main
+#   - cabal run build
+
+# deployment:
+#   production:
+#     branch: hakyll
+#     commands:
+#       - git config --global user.email circleci@circleci
+#       - git config --global user.name CircleCI
+#       - cd _site/ && git status
+#       - cd _site/ && git add --all
+#       - cd _site/ && git commit -m "Update (`date '+%F %T %Z'`) [ci skip]"
+#       - cd _site/ && git push origin main
+#       - git status
+#       - git add _site/
+#       - git commit -m "Update _site (`date '+%F %T %Z'`) [ci skip]"
+#       - git push origin hakyll
