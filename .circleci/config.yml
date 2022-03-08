@@ -11,13 +11,13 @@ jobs:
           key: haskell-artifacts-{{ checksum "geosphere-tech-github-io.cabal" }}
       - run:
           name: Update Dependencies
-          command: cabal new-update && cabal new-install --lib
+          command: cabal new-update
       - run:
           name: Build
           command: cabal new-build
-      - run:
-          name: Build Tests
-          command: cabal new-build --enable-tests
+      # - run:
+      #     name: Build Tests
+      #     command: cabal new-build --enable-tests
       - save_cache:
           name: Cache Artifacts
           key: haskell-artifacts-{{ checksum "geosphere-tech-github-io.cabal" }}
