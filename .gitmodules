@@ -1,0 +1,3 @@
+[submodule "_site"]
+	path = _site
+	url = git@github.com:geosphere-tech/geosphere-tech.github.io.git
