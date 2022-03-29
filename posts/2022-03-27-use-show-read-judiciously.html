@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>GeoSphere Haskell Consulting Company - Use Show and Read Judiciously</title>
+        <link rel="stylesheet" href="../css/default.css" />
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+                <a href="../">GeoSphere</a>
+            </div>
+            <nav>
+                <a href="../">Home</a>
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../archive.html">Archive</a>
+            </nav>
+        </header>
+
+        <main role="main">
+            <h1>Use Show and Read Judiciously</h1>
+            <article>
+    <section class="header">
+        Posted on March 27, 2022
+        
+            by Ilia Rodionov
+        
+    </section>
+    <section>
+        <h2 id="motivating-examples">Motivating examples</h2>
+<h3 id="read-instances-typechecks-but-doesnt-work">Read instances: typechecks, but doesn’t work</h3>
+<p>One of the commonly admitted upsides of Haskell and its powerful type-system is
+ability to refactor programs in a safe manner. Indeed, by using thoroughly defined
+types and just by leveraging the easiness of introducing zero run-time cost
+<code>newtype</code>s, we can eliminate a whole class of errors caused by representing many
+different things by one and the same type.</p>
+<p>That being said, we should exercise extra attention when it comes to munging data
+at application’s boundaries where everything likely gets a representation based on
+very basic types, most often <code>String</code>.</p>
+<p>Consider the following example of reading an environment variable from a real codebase:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ot">pgPort ::</span> <span class="dt">Word16</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>pgPort <span class="ot">=</span> fromMaybe <span class="dv">5432</span> <span class="op">$</span> readMaybe <span class="op">=&lt;&lt;</span> lookupEnv <span class="st">&quot;PG_PORT&quot;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ot">lookupEnv ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> <span class="dt">String</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>lookupEnv <span class="ot">=</span> <span class="op">...</span></span></code></pre></div>
+<p>Someone had to move from <code>Word16</code> to <code>String</code> here for some reason and came up with
+these lines having done mere mechanical changes:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ot">pgPort ::</span> <span class="dt">String</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>pgPort <span class="ot">=</span> fromMaybe <span class="st">&quot;5432&quot;</span> <span class="op">$</span> readMaybe <span class="op">=&lt;&lt;</span> lookupEnv <span class="st">&quot;PG_PORT&quot;</span></span></code></pre></div>
+<p>While this code compiles, it doesn’t work as expected. Reading a <code>String</code> will fail
+unless the value is properly quoted, but no one will expect this being the case when
+setting a value of an environment variable. As a result, you most probably will get the
+default value regardless what has been set:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> readMaybe <span class="st">&quot;5432&quot;</span><span class="ot"> ::</span> <span class="dt">Maybe</span> <span class="dt">String</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="dt">Nothing</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> readMaybe <span class="st">&quot;\&quot;5432\&quot;&quot;</span><span class="ot"> ::</span> <span class="dt">Maybe</span> <span class="dt">String</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="dt">Just</span> <span class="st">&quot;5432&quot;</span></span></code></pre></div>
+<p>Remembering that <code>String</code> is effectively a list of <code>Char</code> we also might specify the
+value as following:</p>
+<pre><code>λ&gt; readMaybe &quot;['5','4','3','2']&quot; :: Maybe String
+Just &quot;5432&quot;</code></pre>
+<p>Albeit it can be quite frustrating, such an implementation of <code>Read</code> makes sense since
+it holds a <em>social contract</em> of being a counterpart to <code>Show</code>. But let sleeping dogs lie,
+and let’s take how <code>Show</code> has been implemented without further questions. The lesson we
+learned from that example is that it’s intrinsically unsafe to use <code>Read</code> standard
+instances for parsing values.</p>
+<h3 id="show-instances-escaping-strings">Show instances: escaping strings</h3>
+<p>TODO: Example with Text-based logging.</p>
+<h2 id="what-to-do">What to do?</h2>
+<h3 id="use-newtype-wrappers">Use newtype wrappers</h3>
+<h3 id="skip-showing-of-stringstexts">Skip showing of Strings/Texts</h3>
+<h2 id="additional-quirks">Additional quirks</h2>
+<h3 id="octal-and-hexadecimal-literals">Octal and hexadecimal literals</h3>
+<pre><code>&gt;&gt;&gt; readMaybe &quot; 10 &quot; :: Maybe Int
+Just 10
+&gt;&gt;&gt; readMaybe &quot;0xA&quot; :: Maybe Int
+Just 10
+&gt;&gt;&gt; readMaybe &quot;0o12&quot; :: Maybe Int
+Just 10</code></pre>
+<h3 id="numericunderscores">NumericUnderscores</h3>
+<p><code>NumericUnderscores</code> brings readability to long numbers, but doesn’t affect <code>Read</code>/<code>Show</code>
+instances, which might again brings up a question why these instances are implemented
+as they are (since initially <code>Show</code>-ed string representations match literals):</p>
+<pre><code>&gt;&gt;&gt; :set -XNumericUnderscores
+&gt;&gt;&gt; readMaybe &quot;1_000&quot; :: Maybe Int
+Nothing</code></pre>
+    </section>
+</article>
+
+        </main>
+
+        <footer>
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </footer>
+    </body>
+</html>
