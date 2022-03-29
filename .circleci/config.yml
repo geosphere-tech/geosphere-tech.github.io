@@ -30,7 +30,7 @@ jobs:
           command: cabal run site build
       - run:
           name: Push to main
-          command: git config --global user.email circleci@circleci && git config --global user.name CircleCI && cd _site/ && git status && git commit -a -m "Update (`date '+%F %T %Z'`) [ci skip]" && git push origin main
+          command: git config --global user.email circleci@circleci && git config --global user.name CircleCI && cd _site/ && git status && git add . && git commit -a -m "Update (`date '+%F %T %Z'`) [ci skip]" && git push origin main
       - run:
           name: Push to hakyll
           command: git add _site/ && git commit -m "Update _site (`date '+%F %T %Z'`) [ci skip]" && git push origin hakyll
