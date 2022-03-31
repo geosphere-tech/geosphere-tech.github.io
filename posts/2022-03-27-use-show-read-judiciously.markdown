@@ -3,21 +3,20 @@ title: Use Show and Read Judiciously
 author: Ilia Rodionov
 ---
 
-## Motivating examples
+## Read instances: typechecks, but doesn't work
 
-### Read instances: typechecks, but doesn't work
-
-One of the commonly admitted upsides of Haskell and its powerful type-system is
+One of the commonly admitted upsides of Haskell and its powerful type system is
 ability to refactor programs in a safe manner. Indeed, by using thoroughly defined
 types and just by leveraging the easiness of introducing zero run-time cost
 `newtype`s, we can eliminate a whole class of errors caused by representing many
-different things by one and the same type.
+different things by means of one and the same type.
 
 That being said, we should exercise extra attention when it comes to munging data
 at application's boundaries where everything likely gets a representation based on
-very basic types, most often `String`.
+very basic types, most often `String` (or more probably `Text`).
 
-Consider the following example of reading an environment variable from a real codebase:
+Consider the following example of reading an environment variable, taken from a 
+real production codebase:
 
 ```Haskell
 pgPort :: Word16
@@ -27,8 +26,8 @@ lookupEnv :: String -> Maybe String
 lookupEnv = ...
 ```
 
-Someone had to move from `Word16` to `String` here for some reason and came up with
-these lines having done mere mechanical changes:
+Someone had to move from `Word16` to `String` here for some reason, and came up with
+these lines having done just mechanical changes:
 
 ```Haskell
 pgPort :: String
@@ -47,50 +46,60 @@ Nothing
 Just "5432"
 ```
 
-Remembering that `String` is effectively a list of `Char` we also might specify the
-value as following:
+Remembering that `String` is effectively a list of `Char`s, so we also might specify the
+value as following (which is even more weird):
 
 ```
 λ> readMaybe "['5','4','3','2']" :: Maybe String
 Just "5432"
 ```
 
-Albeit it can be quite frustrating, such an implementation of `Read` makes sense since
+Albeit the fact that we can read `\"5432\"` and even `['5','4','3','2']`, but not `5432`
+as a `String` can be quite frustrating, such an implementation of `Read` makes sense since
 it holds a *social contract* of being a counterpart to `Show`. But let sleeping dogs lie,
-and let's take how `Show` has been implemented without further questions. The lesson we
-learned from that example is that it's intrinsically unsafe to use `Read` standard
-instances for parsing values.
+and let's take the way how `Show` is implemented without further questions. The rational
+behind quoting strings becomes obvious when `Text` is used as a part of a complex data type:
 
-### Show instances: escaping strings
-
-TODO: Example with Text-based logging.
-
-## What to do?
-
-### Use newtype wrappers
-### Skip showing of Strings/Texts
-
-## Additional quirks
-
-### Octal and hexadecimal literals
-
-```
->>> readMaybe " 10 " :: Maybe Int
-Just 10
->>> readMaybe "0xA" :: Maybe Int
-Just 10
->>> readMaybe "0o12" :: Maybe Int
-Just 10
+```Haskell
+>>> data Person = Person String (Maybe Int) deriving Show
+>>> Person "Jon Snow" (Just 42)
+Person "Jon Snow" (Just 42)
 ```
 
-### NumericUnderscores
+The lesson we learned from that example is that it's intrinsically unsafe to use `Read` or at least
+some standard instances for parsing values. While it might work well when the string representation
+is aligned with what we expect, it can break abruptly when it is not. And indeed, `Show`
+and `Read` have been designed as means to debug programs in GHCi. But people will use
+them for other purposes in the wild, so keep your eyes open!
 
-`NumericUnderscores` brings readability to long numbers, but doesn't affect `Read`/`Show`
-instances, which might again brings up a question why these instances are implemented
-as they are (since initially `Show`-ed string representations match literals):
+## Show instances: multi-escaping
 
+One aspect which tends to make extensive use of `Show` is logging. Once we expose a logging
+action in terms of `Show`, which means we handle a value using `show`, we become responsible
+for cases when someone calls another `show` from `Text` / `String` instance before our call,
+leading to somewhat ugly log entries which are tricky to parse correctly:
+
+```Haskell
+λ> show $ show $ show "some \" payload"
+"\"\\\"\\\\\\\"some \\\\\\\\\\\\\\\" payload\\\\\\\"\\\"\""
 ```
->>> :set -XNumericUnderscores
->>> readMaybe "1_000" :: Maybe Int
-Nothing
+
+Using `Show` is believed to be highly contagious, and it is hard to get rid of it once it
+has been introduced and spread over the codebase. One of the options to go in cases like that
+might be using of the reflection to decide whether we have to call `show` again:
+
+```Haskell
+logMessage :: forall p . (Typeable p, Show p)
+           => LogLevel -> payload -> Logger ()
+logMessage lvl tag = lift $ LogMessage lvl textPayload
+  where
+    textPayload :: Text
+    textPayload
+      | Just HRefl <- eqTypeRep (typeRep @tag) (typeRep @Text  ) = tag
+      | Just HRefl <- eqTypeRep (typeRep @tag) (typeRep @String) = toText tag
+      | otherwise = show tag
 ```
+
+So, again, we'd better not use `Show`, but find other ways of transforming things
+to be logged into `Text` / `String` representation. Take a look at very concise
+`contra-tracer` library to gain some inspiration.
