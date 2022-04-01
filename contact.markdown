@@ -1,10 +1,17 @@
 ---
-title: Contact
+title: Contacts
 ---
 
-I live in a small hut in the mountains of Kumano Kodō on Kii Hantō and would not
-like to be contacted.
+Contact us on [Telegram](https://www.t.me/wrover)!
 
-I kid you not, folks!
+## Company details
 
-Huh, it works!
+GeoSphere Ltd.  
+TODO Link to the Business Registry
+
+**Address:**
+
+98 Zurab Gorgiladze St, 521  
+Batumi 6004  
+Georgia
+
