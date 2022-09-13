@@ -1,11 +1,11 @@
---------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
 
-import           Data.Monoid (mappend)
-import           Hakyll
-
+import Hakyll
+import Text.Pandoc.Highlighting (Style, styleToCss, tango)
+import Text.Pandoc.Options      (WriterOptions (..))
 
 --------------------------------------------------------------------------------
+
 main :: IO ()
 main = hakyll $ do
 
@@ -17,15 +17,19 @@ main = hakyll $ do
         route   idRoute
         compile compressCssCompiler
 
+    create ["css/syntax.css"] $ do
+        route idRoute
+        compile $ makeItem $ styleToCss codeStyle
+
     match (fromList ["about.markdown", "contact.markdown"]) $ do
         route   $ setExtension "html"
-        compile $ pandocCompiler
+        compile $ pandocCompiler'
             >>= loadAndApplyTemplate "templates/default.html" defaultContext
             >>= relativizeUrls
 
     match "posts/*" $ do
         route $ setExtension "html"
-        compile $ pandocCompiler
+        compile $ pandocCompiler'
             >>= loadAndApplyTemplate "templates/post.html"    postCtx
             >>= loadAndApplyTemplate "templates/default.html" postCtx
             >>= relativizeUrls
@@ -59,9 +63,20 @@ main = hakyll $ do
 
     match "templates/*" $ compile templateBodyCompiler
 
-
 --------------------------------------------------------------------------------
+
 postCtx :: Context String
 postCtx =
     dateField "date" "%B %e, %Y" `mappend`
     defaultContext
+
+codeStyle :: Style
+codeStyle = tango
+
+pandocCompiler' :: Compiler (Item String)
+pandocCompiler' =
+  pandocCompilerWith
+    defaultHakyllReaderOptions
+    defaultHakyllWriterOptions
+      { writerHighlightStyle = Just codeStyle
+      }
