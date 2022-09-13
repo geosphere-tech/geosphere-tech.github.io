@@ -27,10 +27,10 @@ jobs:
           command: git submodule init && git submodule update && cd _site/ && git checkout main
       - run:
           name: Build Site
-          command: cabal run site clean && cabal run site build
+          command: cabal run site rebuild
       - run:
-          name: Push to main
+          name: Push changes
           command: git config --global user.email circleci@circleci && git config --global user.name CircleCI && cd _site/ && git status && git add . && git commit -a -m "Update (`date '+%F %T %Z'`) [ci skip]" && git push origin main
       - run:
           name: Push to hakyll
-          command: git add _site/ && git commit -m "Update _site (`date '+%F %T %Z'`) [ci skip]" && git push origin hakyll
+          command: git add _site/ && git commit -m "Update _site ref (`date '+%F %T %Z'`) [ci skip]" && git push origin hakyll
