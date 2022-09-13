@@ -23,14 +23,17 @@ jobs:
             - "/root/.cabal"
             - "dist-newstyle"
       - run:
+          name: Build Site
+          command: cabal run site rebuild && mv _site _site_
+      - run:
           name: Init Git submodules
           command: git submodule init && git submodule update && cd _site/ && git checkout main
       - run:
-          name: Build Site
-          command: cabal run site rebuild
+          name: Install results
+          command: yes | cp -r ./_site_/* ./_site/ && rm -rf ./_site_
       - run:
-          name: Push changes
+          name: Push changes to main branch
           command: git config --global user.email circleci@circleci && git config --global user.name CircleCI && cd _site/ && git status && git add . && git commit -a -m "Update (`date '+%F %T %Z'`) [ci skip]" && git push origin main
       - run:
-          name: Push to hakyll
+          name: Push new main ref to hakyll branch
           command: git add _site/ && git commit -m "Update _site ref (`date '+%F %T %Z'`) [ci skip]" && git push origin hakyll
