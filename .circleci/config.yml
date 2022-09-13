@@ -29,11 +29,14 @@ jobs:
           name: Init Git submodules
           command: git submodule init && git submodule update && cd _site/ && git checkout main
       - run:
-          name: Install results
-          command: yes | cp -r ./_site_/* ./_site/
-      - run:
-          name: Remove temporary folder
-          command: rm -rf ./_site_
+          name: Foo
+          command: mv ./_site/.git ./_site_/ && rm -rf ./_site && mv _site_ _site
+      # - run:
+      #     name: Install results
+      #     command: yes | cp -r ./_site_/* ./_site/
+      # - run:
+      #     name: Remove temporary folder
+      #     command: rm -rf ./_site_
       - run:
           name: Push changes to main branch
           command: git config --global user.email circleci@circleci && git config --global user.name CircleCI && cd _site/ && git status && git add . && git commit -a -m "Update (`date '+%F %T %Z'`) [ci skip]" && git push origin main
