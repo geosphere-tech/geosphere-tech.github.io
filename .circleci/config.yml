@@ -30,7 +30,7 @@ jobs:
           command: git submodule init && git submodule update && cd _site/ && git checkout main
       - run:
           name: Foo
-          command: mv ./_site/.git ./_site_/ && rm -rf ./_site && mv _site_ _site
+          command: mv ./_site/.git ./_site/CNAME ./_site_/ && rm -rf ./_site && mv _site_ _site
       # - run:
       #     name: Install results
       #     command: yes | cp -r ./_site_/* ./_site/
