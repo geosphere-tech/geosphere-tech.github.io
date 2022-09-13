@@ -31,7 +31,6 @@ jobs:
       - run:
           name: Install results
           command: yes | cp -r ./_site_/* ./_site/
-           rm -rf ./_site_
       - run:
           name: Remove temporary folder
           command: rm -rf ./_site_
