@@ -75,4 +75,4 @@ logMessage lvl tag = lift $ LogMessage lvl textPayload
       | otherwise = show tag
 ```
 
-So, again, we would better not use `Show`, but find other ways of transforming things to be logged into `Text` / `String` representation. Take a look at very concise `contra-tracer` library to gain further inspiration.
+So, again, we would better not use `Show`, but find other ways of transforming things to be logged into `Text` / `String` representation.
