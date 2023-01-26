@@ -71,7 +71,7 @@ Just &quot;5432&quot;</code></pre>
 <span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> <span class="dt">Just</span> <span class="dt">HRefl</span> <span class="ot">&lt;-</span> eqTypeRep (typeRep <span class="op">@</span>tag) (typeRep <span class="op">@</span><span class="dt">Text</span>  ) <span class="ot">=</span> tag</span>
 <span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> <span class="dt">Just</span> <span class="dt">HRefl</span> <span class="ot">&lt;-</span> eqTypeRep (typeRep <span class="op">@</span>tag) (typeRep <span class="op">@</span><span class="dt">String</span>) <span class="ot">=</span> toText tag</span>
 <span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="fu">show</span> tag</span></code></pre></div>
-<p>So, again, we would better not use <code>Show</code>, but find other ways of transforming things to be logged into <code>Text</code> / <code>String</code> representation. Take a look at very concise <code>contra-tracer</code> library to gain further inspiration.</p>
+<p>So, again, we would better not use <code>Show</code>, but find other ways of transforming things to be logged into <code>Text</code> / <code>String</code> representation.</p>
     </section>
 </article>
 
